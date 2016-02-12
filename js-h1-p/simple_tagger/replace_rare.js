@@ -1,5 +1,6 @@
 var path = require("path")
 var fs = require("fs")
+var fileName = '../gene.train'; // replace with ARGV
 
 // Iterate over training data
 function splitFile(fileName) {
@@ -10,7 +11,7 @@ function splitFile(fileName) {
     var line = lines[i];
     var words = line.split(" ");
     var tag = words.splice(1, words.length-1);
-    result.push({words: words.join(" "), tag: tag})
+    result.push({words: words.join(" "), tag: tag.join(" ")})
   }
   return result;
 }
@@ -46,7 +47,17 @@ Replacer.prototype.replaceRare = function(fileName, outputFile){
   for(i=0; i<iterator.length; i++){
     var line = iterator[i];
     if (! line.words ) {
-      
+      console.log('\n');
+    } else {
+      if (this.counts[line.words] > 0) {
+        console.log('_RARE_', line.tag);
+      } else {
+        console.log(line.words, line.tag);
+      }
     }
   }
 }
+
+var replacer = new Replacer();
+replacer.wordCount(fileName);
+replacer.replaceRare(fileName);
