@@ -55,45 +55,30 @@ Tagger.prototype.readCounts = function(iterator, output){
   }
 }
 
-Tagger.prototype.countTag = function(word){
-  console.log('WORD', word);
+Tagger.prototype.countTag = function(word) {
   var count = 0;
   var c = 0;
   var rare = true;
   var neTag;
-  for(i=0; i<this.allStates.length; i++){
-    var tag = this.allStates[i];
+  var allStates = this.allStates
+  var emissionCounts = this.emissionCounts;
+  var neTagCounts = this.neTagCounts;
+  allStates.forEach(function(tag){
+    // console.log('TAG', tag);
     var key = word + ':' + tag;
-    console.log(this.emissionCounts[key])
-    if (this.emissionCounts[key] > 0) {
+    if (emissionCounts[key] > 0) {
       rare = false;
-      c = this.emissionCounts[key] / this.neTagCounts[tag];
-      console.log('C', c);
+      c = emissionCounts[key] / neTagCounts[tag];
     }
     if (count < c) {
       count = c;
       neTag = tag;
     }
-  }
-  console.log('RARE', rare);
+  })
   if (rare == true ) {
      return '0';
   } else {
     return neTag;
-  }
-}
-Tagger.prototype.writeATag = function(word) {
-  var count = 0;
-  this.word = word
-  var c = 0;
-  var rare = true;
-  var neTag;
-  var allStates = this.allStates
-  console.log('MYSTATE', allStates)
-  for(i=0; i>allStates.length; i++){
-    var tag = allStates[i];
-    console.log('THIS TAG', tag);
-
   }
   return count
 }
@@ -102,7 +87,7 @@ Tagger.prototype.writeTags = function(iterator, output){
   for(i=0; i<iterator.length; i++){
     var word = iterator[i];
     console.log('WORD', word);
-    var tag = this.writeATag(word);
+    var tag = this.countTag(word);
     console.log('TAG', tag);
     // if ( word) {
     //   var tag = this.countTag(word);
