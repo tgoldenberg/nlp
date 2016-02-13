@@ -64,7 +64,6 @@ Tagger.prototype.countTag = function(word) {
   var emissionCounts = this.emissionCounts;
   var neTagCounts = this.neTagCounts;
   allStates.forEach(function(tag){
-    // console.log('TAG', tag);
     var key = word + ':' + tag;
     if (emissionCounts[key] > 0) {
       rare = false;
