@@ -12,3 +12,6 @@ target_link_libraries(get_low_frequency_words ex1lib)
 
 add_executable (replace_low_frequency_words replace_low_frequency_words.cc)
 target_link_libraries(replace_low_frequency_words ex1lib)
+
+add_executable (simple_tagger simple_tagger.cc)
+target_link_libraries(simple_tagger ex1lib)
