@@ -88,12 +88,6 @@ Tagger.prototype.writeTags = function(iterator, output){
     console.log('WORD', word);
     var tag = this.countTag(word);
     console.log('TAG', tag);
-    // if ( word) {
-    //   var tag = this.countTag(word);
-    //   console.log('TAG', tag);
-    // } else {
-    //   console.log('\n');
-    // }
   }
 }
 

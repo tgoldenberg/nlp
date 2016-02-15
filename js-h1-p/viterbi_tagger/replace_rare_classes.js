@@ -58,18 +58,26 @@ Replacer.prototype.wordCount = function(fileName, output){
 Replacer.prototype.filterRareWord = function(word){
   var self = this;
   var result = word;
+  var done = false;
   if (this.counts[word] == 0) {
+    done = true;
     return word;
   }
   this.rareWordsFilter.forEach(function(filter, idx){
     var mark = filter[0];
     var regex = filter[1];
+    // console.log('REG', regex, mark);
     var re = new RegExp(regex, 'g');
-    if (word.match(re)) {
+    if (word.match(re) != null) {
+      done = true;
+      result = mark;
       return mark;
     }
   })
-  return 'RARE' + word;
+  if (! done) {
+    result = '_RARE_'
+  }
+  return result;
 }
 
 Replacer.prototype.replaceRare = function(fileName, output){
