@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   std::ifstream input_file(argv[1]);
 
   CountReader count_reader(input_file);
-  std::unordered_map<std::string, int> word_counts = get_word_counts(count_reader);
+  std::map<std::string, int> word_counts = get_word_counts(count_reader);
   for (const auto& it : word_counts) {
     if (it.second < 5) {
       std::cout << it.first << std::endl;

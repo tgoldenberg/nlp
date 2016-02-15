@@ -2,8 +2,8 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -30,8 +30,10 @@ class DataReader {
 struct CountLine {
   int count;
   std::string type;
-  std::string tag;   
-  std::string word;
+  std::string word0;
+  std::string word1;
+  std::string word2;
+  std::string word3;
 };
 
 class CountReader {
@@ -42,17 +44,58 @@ class CountReader {
   std::ifstream& input_file_;
 };
 
-std::unordered_map <std::string, int> get_word_counts(CountReader& model_reader);
+std::map<std::string, int> get_word_counts(CountReader& model_reader);
 
 class SimpleTagger {
  public:
   SimpleTagger();
 
-  void BuildModel(CountReader& count_reader);
+  virtual void BuildModel(CountReader& count_reader);
   std::string TagWord(const std::string& word, bool fallback_to_rare = true);
  private:
   std::map<std::string, std::map<std::string, int>> emission_counts_;
   std::map<std::string, int> tag_counts_;
 };
- 
+
+class ViterbiTagger {
+ public:
+  ViterbiTagger();
+  
+  void BuildModel(CountReader& count_reader);
+  float GetTrigramProbability(const std::string& t0,
+                              const std::string& t1,
+                              const std::string& t2);
+  float GetEmissionProbability(const std::string& tag,
+                               const std::string& word);
+  std::set<std::string>& GetTags();
+  std::vector<TaggedWord> TagSentence(const std::vector<std::string>& sentence);
+ private:
+  std::map<std::string, std::map<std::string, std::map<std::string, int>>> tag_trigrams_;
+  std::map<std::string, std::map<std::string, int>> tag_bigrams_;
+
+  std::map<std::string, std::map<std::string, int>> emission_counts_;
+  std::map<std::string, int> tag_counts_;
+  std::set<std::string> tags_;
+  std::set<std::string> words_in_model_;
+};
+
+struct ViterbiTriple {
+  int spot;
+  std::string& u;
+  std::string& v;
+};
+
+class ViterbiSolver {
+ public:
+  int Pi(std::string& u,
+         std::string& v,
+         int spot);
+  std::vector<TaggedWord> TagSentence(
+      const std::vector<std::string>& sentence,
+      const ViterbiTagger& viterbi_tagger);
+ private:
+  std::map<ViterbiTriple, int> pi_;
+  std::map<ViterbiTriple, std::string> back_pointers_;
+};
+
 #endif
