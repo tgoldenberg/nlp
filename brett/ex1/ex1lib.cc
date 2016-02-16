@@ -118,6 +118,8 @@ string SimpleTagger::TagWord(const string& word, bool fallback_to_rare) {
 
 void ViterbiTagger::BuildModel(CountReader& count_reader) {
   CountLine count_line;
+  tags_.insert("*");
+  tags_.insert("STOP");
   while (count_reader.YieldLine(&count_line)) {
     if (count_line.type == "WORDTAG") {
       add_1_key_value_to_map(count_line.word0, count_line.count, tag_counts_);
@@ -161,6 +163,10 @@ const set<string>& ViterbiTagger::GetTags() const {
   return tags_;
 }
 
+const set<string>& ViterbiTagger::GetWordsInModel() const {
+  return words_in_model_;
+}
+
 vector<TaggedWord> ViterbiTagger::TagSentence(const vector<string>& sentence) {
   ViterbiSolver solver(sentence, *this);
   return solver.TagSentence();
@@ -188,7 +194,13 @@ string ViterbiSolver::SampleSentence(int i) const {
   } else if (i >= sentence_.size()) {
     return "STOP";
   } else {
-    return sentence_[i];
+    // Add rare logic sampling here.
+    if (viterbi_tagger_.GetWordsInModel().find(sentence_[i]) != 
+        viterbi_tagger_.GetWordsInMOdel().end()) {
+      return sentence_[i];
+    } else {
+      return "_RARE_";
+    }
   }
 }
 
@@ -212,6 +224,7 @@ float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
   if (pi_.find(vt) != pi_.end()) {
     return pi_[vt];   
   }
+
   float max_prob = 0.0f;
   string max_tag = "";
   for (const string& tag_w : viterbi_tagger_.GetTags()) {

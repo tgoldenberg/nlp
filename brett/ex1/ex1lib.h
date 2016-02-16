@@ -68,6 +68,7 @@ class ViterbiTagger {
   float GetEmissionProbability(const std::string& tag,
                                const std::string& word) const;
   const std::set<std::string>& GetTags() const;
+  const std::set<std::string>& GetWordsInModel() const;
   std::vector<TaggedWord> TagSentence(const std::vector<std::string>& sentence);
  private:
   std::map<std::string, std::map<std::string, std::map<std::string, int>>> tag_trigrams_;
