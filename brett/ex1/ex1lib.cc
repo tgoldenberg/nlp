@@ -1,13 +1,13 @@
 #include "ex1lib.h"
 #include "ex1maputil.h"
 
-#include <fstream>
 #include <iostream>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
+using std::istream;
 using std::ifstream;
 using std::map;
 using std::set;
@@ -15,17 +15,17 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-DataReader::DataReader(ifstream& input_file) : input_file_(input_file) {}
+DataReader::DataReader(istream& input_file) : input_file_(input_file) {}
 
 bool DataReader::YieldLine(DataLine* data_line) {
   string line;
   // go to the first non empty line
   bool found_non_empty_line = false;
-  while (std::getline(input_file_, line)) { 
+  while (std::getline(input_file_, line)) {
     if (line.empty()) {
       found_non_empty_line = true;
       break;
-    }   
+    }
   }
 
   // read consecutive lines
@@ -47,8 +47,8 @@ bool DataReader::YieldLine(DataLine* data_line) {
   return (data_line->tagged_words.size() > 0);
 }
 
-CountReader::CountReader(ifstream& input_file) : input_file_(input_file) {}
- 
+CountReader::CountReader(istream& input_file) : input_file_(input_file) {}
+
 bool CountReader::YieldLine(CountLine* count_line) {
   string line;
   while (std::getline(input_file_, line)) {

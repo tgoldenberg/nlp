@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 2.8.11)
 
+ENABLE_LANGUAGE(C)
+
 include(ExternalProject)
+find_package (Threads)
 
 project (ex1)
 
@@ -65,4 +68,9 @@ add_executable (viterbi_tagger viterbi_tagger.cc)
 target_link_libraries(viterbi_tagger ex1lib)
 
 add_executable(viterbi_tagger_test viterbi_tagger_test.cc)
-target_link_libraries(viterbi_tagger_test ex1lib libgtest libgmock)
+target_link_libraries(viterbi_tagger_test
+    ex1lib
+    ${CMAKE_THREAD_LIBS_INIT}
+    libgtest
+    libgmock
+    pthread)
