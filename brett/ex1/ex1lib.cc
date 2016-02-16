@@ -118,8 +118,6 @@ string SimpleTagger::TagWord(const string& word, bool fallback_to_rare) {
 
 void ViterbiTagger::BuildModel(CountReader& count_reader) {
   CountLine count_line;
-  tags_.insert("*");
-  tags_.insert("STOP");
   while (count_reader.YieldLine(&count_line)) {
     if (count_line.type == "WORDTAG") {
       add_1_key_value_to_map(count_line.word0, count_line.count, tag_counts_);
@@ -196,7 +194,7 @@ string ViterbiSolver::SampleSentence(int i) const {
   } else {
     // Add rare logic sampling here.
     if (viterbi_tagger_.GetWordsInModel().find(sentence_[i]) != 
-        viterbi_tagger_.GetWordsInMOdel().end()) {
+        viterbi_tagger_.GetWordsInModel().end()) {
       return sentence_[i];
     } else {
       return "_RARE_";
@@ -205,16 +203,45 @@ string ViterbiSolver::SampleSentence(int i) const {
 }
 
 vector<TaggedWord> ViterbiSolver::TagSentence() {
-  for (const string& tag : viterbi_tagger_.GetTags()) {
-    Pi(tag, "STOP", sentence_.size() + 1);
+  if (sentence_.size() < 3) {
+    return {};
   }
-  return {};
+  string max_u = "";
+  string max_v = "";
+  float max_uv_prob = 0.0f;
+  for (const string& u : viterbi_tagger_.GetTags()) {
+    for (const string& v : viterbi_tagger_.GetTags()) {
+      float curr_uv_prob = Pi(u, v, sentence_.size()) *
+        viterbi_tagger_.GetTrigramProbability(u, v, "STOP");
+      if (curr_uv_prob >= max_uv_prob) {
+        max_uv_prob = curr_uv_prob;
+        max_u = u;
+        max_v = v;
+      }
+    }
+  }
+  vector<TaggedWord> tagged_sentence;
+  for (const string& word : sentence_) {
+    TaggedWord tw;
+    tw.tag = "";
+    tw.word = word;
+    tagged_sentence.push_back(tw);
+  }
+  tagged_sentence[tagged_sentence.size()-1].tag = max_v;
+  tagged_sentence[tagged_sentence.size()-2].tag = max_u;
+
+  for(int spot = sentence_.size() - 2; spot >= 0; --spot) {
+    ViterbiTriple vt = {spot + 2, tagged_sentence[spot+1].tag, tagged_sentence[spot+2].tag};
+    tagged_sentence[spot].tag = back_pointers_[vt];
+  }
+  return tagged_sentence;
 }
 
 float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
   ViterbiTriple vt = {spot, u, v};
-  if (spot == 0) {
-    if (u == "*" && v == "*") {
+  std::cout << vt.spot << " " << vt.u << " " << vt.v << std::endl;
+  if (spot < 0) {
+    if (u == "*" || v == "*") {
       return 1.0f;
     } else {
       return 0.0f;
@@ -226,12 +253,13 @@ float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
   }
 
   float max_prob = 0.0f;
-  string max_tag = "";
-  for (const string& tag_w : viterbi_tagger_.GetTags()) {
+  string max_tag = "x";
+  set<string> start_tag = { "*" };
+  for (const string& tag_w : (spot -2 > 0 ? viterbi_tagger_.GetTags() : start_tag)) {
     float w_prob = Pi(tag_w, u, spot - 1) *
                    viterbi_tagger_.GetTrigramProbability(tag_w, u, v) *
                    viterbi_tagger_.GetEmissionProbability(
-                    tag_w, SampleSentence(spot));
+                      v, SampleSentence(spot));
     if (w_prob > max_prob) {
       max_prob = w_prob;
       max_tag = tag_w;

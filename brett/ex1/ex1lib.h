@@ -59,8 +59,6 @@ class SimpleTagger {
 
 class ViterbiTagger {
  public:
-  ViterbiTagger();
-  
   void BuildModel(CountReader& count_reader);
   float GetTrigramProbability(const std::string& t0,
                               const std::string& t1,
