@@ -64,10 +64,10 @@ class ViterbiTagger {
   void BuildModel(CountReader& count_reader);
   float GetTrigramProbability(const std::string& t0,
                               const std::string& t1,
-                              const std::string& t2);
+                              const std::string& t2) const;
   float GetEmissionProbability(const std::string& tag,
-                               const std::string& word);
-  std::set<std::string>& GetTags();
+                               const std::string& word) const;
+  const std::set<std::string>& GetTags() const;
   std::vector<TaggedWord> TagSentence(const std::vector<std::string>& sentence);
  private:
   std::map<std::string, std::map<std::string, std::map<std::string, int>>> tag_trigrams_;
@@ -81,19 +81,22 @@ class ViterbiTagger {
 
 struct ViterbiTriple {
   int spot;
-  std::string& u;
-  std::string& v;
+  const std::string& u;
+  const std::string& v;
+  bool operator<(const ViterbiTriple& rhs) const;
 };
 
 class ViterbiSolver {
  public:
-  int Pi(std::string& u,
-         std::string& v,
-         int spot);
-  std::vector<TaggedWord> TagSentence(
-      const std::vector<std::string>& sentence,
-      const ViterbiTagger& viterbi_tagger);
+  ViterbiSolver(
+    const std::vector<std::string>& sentence,
+    const ViterbiTagger& viterbi_tagger);
+  float Pi(const std::string& u, const std::string& v, int spot);
+  std::string SampleSentence(int i) const;
+  std::vector<TaggedWord> TagSentence();
  private:
+  const std::vector<std::string>& sentence_;
+  const ViterbiTagger& viterbi_tagger_;
   std::map<ViterbiTriple, int> pi_;
   std::map<ViterbiTriple, std::string> back_pointers_;
 };

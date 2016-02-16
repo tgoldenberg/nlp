@@ -135,7 +135,7 @@ void ViterbiTagger::BuildModel(CountReader& count_reader) {
 float ViterbiTagger::GetTrigramProbability(
     const string& t0,
     const string& t1,
-    const string& t2) {
+    const string& t2) const {
   int count_trigram = 0;
   int count_bigram = 0;
   if (get_3_key_value_from_map(t0, t1, t2, tag_trigrams_, &count_trigram) &&
@@ -146,7 +146,7 @@ float ViterbiTagger::GetTrigramProbability(
 }
 
 float ViterbiTagger::GetEmissionProbability(
-    const string& tag, const string& word) {
+    const string& tag, const string& word) const {
   // For each tag pick 
   int tag_count = 0;
   int word_tag_count = 0;
@@ -157,34 +157,76 @@ float ViterbiTagger::GetEmissionProbability(
   return 0.0f;
 }
 
-set<string>& ViterbiTagger::GetTags() {
+const set<string>& ViterbiTagger::GetTags() const {
   return tags_;
 }
 
 vector<TaggedWord> ViterbiTagger::TagSentence(const vector<string>& sentence) {
-  ViterbiSolver solver;
-  return solver.TagSentence(sentence, this);
+  ViterbiSolver solver(sentence, *this);
+  return solver.TagSentence();
 }
 
-vector<TaggedWord> ViterbiSolver::TagSentence(const vector<string>& sentence) {
-  string i_n1 = "*";
-  string i_n2 = "*";
-  string stop = "STOP";
-  string rare = "_RARE_";
-  for (int i = -2; i < sentence.size() + 1; ++i) {
-    // get the current word, or stop if we go one past the length
-    // of the word
-    string i_0 = stop;
-    if (i < sentence.size()) {
-      i_0 = sentence[i];
-    }
-    // Check if the word is in the model, if not, use _RARE_
-    if (words_in_model_.find(i_0) == words_in_model_.end()) {
-      i_0 = rare;
-    }
+
+bool ViterbiTriple::operator<(const ViterbiTriple& rhs) const {
+  if (spot != rhs.spot) {
+    return spot < rhs.spot;
+  }
+  if (u != rhs.u) {
+    return u < rhs.u;
+  }
+  return v < rhs.v;
+}
+
+ViterbiSolver::ViterbiSolver(
+    const vector<string>& sentence,
+    const ViterbiTagger& viterbi_tagger) : sentence_(sentence),
+                                           viterbi_tagger_(viterbi_tagger) {}
+
+string ViterbiSolver::SampleSentence(int i) const {
+  if (i < 0) {
+    return "*";
+  } else if (i >= sentence_.size()) {
+    return "STOP";
+  } else {
+    return sentence_[i];
   }
 }
 
+vector<TaggedWord> ViterbiSolver::TagSentence() {
+  for (const string& tag : viterbi_tagger_.GetTags()) {
+    Pi(tag, "STOP", sentence_.size() + 1);
+  }
+  return {};
+}
 
+float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
+  ViterbiTriple vt = {spot, u, v};
+  if (spot == 0) {
+    if (u == "*" && v == "*") {
+      return 1.0f;
+    } else {
+      return 0.0f;
+    }
+  }
 
+  if (pi_.find(vt) != pi_.end()) {
+    return pi_[vt];   
+  }
+  float max_prob = 0.0f;
+  string max_tag = "";
+  for (const string& tag_w : viterbi_tagger_.GetTags()) {
+    float w_prob = Pi(tag_w, u, spot - 1) *
+                   viterbi_tagger_.GetTrigramProbability(tag_w, u, v) *
+                   viterbi_tagger_.GetEmissionProbability(
+                    tag_w, SampleSentence(spot));
+    if (w_prob > max_prob) {
+      max_prob = w_prob;
+      max_tag = tag_w;
+    }
+  }
+
+  pi_[vt] = max_prob;
+  back_pointers_[vt] = max_tag;
+ 
+  return max_prob; 
 }
