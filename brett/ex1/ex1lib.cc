@@ -211,7 +211,7 @@ vector<TaggedWord> ViterbiSolver::TagSentence() {
   float max_uv_prob = 0.0f;
   for (const string& u : viterbi_tagger_.GetTags()) {
     for (const string& v : viterbi_tagger_.GetTags()) {
-      float curr_uv_prob = Pi(u, v, sentence_.size()) *
+      float curr_uv_prob = Pi(u, v, sentence_.size()-1) *
         viterbi_tagger_.GetTrigramProbability(u, v, "STOP");
       if (curr_uv_prob >= max_uv_prob) {
         max_uv_prob = curr_uv_prob;
@@ -230,7 +230,7 @@ vector<TaggedWord> ViterbiSolver::TagSentence() {
   tagged_sentence[tagged_sentence.size()-1].tag = max_v;
   tagged_sentence[tagged_sentence.size()-2].tag = max_u;
 
-  for(int spot = sentence_.size() - 2; spot >= 0; --spot) {
+  for(int spot = sentence_.size() - 3; spot >= 0; --spot) {
     ViterbiTriple vt = {spot + 2, tagged_sentence[spot+1].tag, tagged_sentence[spot+2].tag};
     tagged_sentence[spot].tag = back_pointers_[vt];
   }
@@ -239,23 +239,26 @@ vector<TaggedWord> ViterbiSolver::TagSentence() {
 
 float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
   ViterbiTriple vt = {spot, u, v};
-  std::cout << vt.spot << " " << vt.u << " " << vt.v << std::endl;
-  if (spot < 0) {
-    if (u == "*" || v == "*") {
-      return 1.0f;
-    } else {
+  if (spot == 1) {
+    if (u != "*") {
       return 0.0f;
+    }
+  } else if (spot == 0) {
+    if(u == "*" && v == "*") {
+      return true;
+    } else {
+      return false;
     }
   }
 
-  if (pi_.find(vt) != pi_.end()) {
-    return pi_[vt];   
-  }
+  /*if (pi_.find(vt) != pi_.end()) {
+    return pi_[vt];
+  }*/
 
   float max_prob = 0.0f;
   string max_tag = "x";
   set<string> start_tag = { "*" };
-  for (const string& tag_w : (spot -2 > 0 ? viterbi_tagger_.GetTags() : start_tag)) {
+  for (const string& tag_w : spot <= 1 ? start_tag : viterbi_tagger_.GetTags()) {
     float w_prob = Pi(tag_w, u, spot - 1) *
                    viterbi_tagger_.GetTrigramProbability(tag_w, u, v) *
                    viterbi_tagger_.GetEmissionProbability(
@@ -268,6 +271,6 @@ float ViterbiSolver::Pi(const string& u, const string& v, int spot) {
 
   pi_[vt] = max_prob;
   back_pointers_[vt] = max_tag;
- 
-  return max_prob; 
+
+  return max_prob;
 }
