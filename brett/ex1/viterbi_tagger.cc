@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
       sentence_to_tag.push_back(tagged_word.word);
     }
     for (const TaggedWord& tagged_word : viterbi_tagger.TagSentence(sentence_to_tag)) {
-      cout << tagged_word.word << " " << tagged_word.tag << std::endl;
+      cout << tagged_word.word << " " << (!tagged_word.tag.empty() ? tagged_word.tag : "_UNKNOWN_") << std::endl;
     }
     cout << std::endl;
     data_line.tagged_words.clear();
