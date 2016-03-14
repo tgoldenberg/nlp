@@ -1,0 +1,14 @@
+{
+  "name": "js-h2-p",
+  "version": "1.0.0",
+  "description": "nlp assignment",
+  "main": "count_freq.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nlp"
+  ],
+  "author": "tgoldenberg",
+  "license": "ISC"
+}

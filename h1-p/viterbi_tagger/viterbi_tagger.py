@@ -72,6 +72,7 @@ class Viterbi(object):
                 for u in self.tagger.all_states:
                     arg_max = u
                     for w in self.tagger.all_states:
+                        self.count += 1
                         pi = self.pi[(step - 1, w, u)] * self.get_factor((w, u, v), (word, v))
                         if pi > self.pi[(step, u, v)]:
                             self.pi[(step, u, v)] = pi
@@ -83,7 +84,9 @@ class Viterbi(object):
             self.count_step_coeff(i+1)
 
     def make_tag_sequence(self):
+        self.count = 0
         self.count_coeff()
+        print 'COUNT', self.count 
         n = len(self.sentence)
         if 1 == n:
             max_val = 0
