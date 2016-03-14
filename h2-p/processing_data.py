@@ -38,7 +38,7 @@ def travelLeafNode(tree) :
         travelLeafNode(tree[2])
     return
 
-def replaceRateWords( TRAINFILE = 'parse_train_vert.dat', OUTPUTFILE = "proceed_parse_train.p3.dat") :
+def replaceRareWords( TRAINFILE = 'parse_train_vert.dat', OUTPUTFILE = "proceed_parse_train.p3.dat") :
     f = open(TRAINFILE, "r")
     outputF = open(OUTPUTFILE, "w")
     for jsonItem in f :
@@ -52,5 +52,5 @@ import count_cfg_freq
 
 if __name__ == '__main__' :
     getRareItems()
-    replaceRateWords()
+    replaceRareWords()
     count_cfg_freq.main('proceed_parse_train.p3.dat')
