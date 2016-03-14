@@ -2,6 +2,10 @@
 
 var fs = require('fs');
 var path = require('path');
+var JSON = require('json5');
+var fileName = "./parse_train.dat";
+var output = "./cfg.counts";
+fs.writeFileSync(output, '');
 
 function splitFile(fileName){
   var file = fs.readFileSync(fileName, "utf8");
@@ -14,7 +18,7 @@ function splitFile(fileName){
     }
   }
   return result;
-}
+};
 
 function Counts(){
   this.unary = {}; // {}
@@ -25,46 +29,48 @@ function Counts(){
 Counts.prototype.show = function(){
   let outerKeys, innerKeys;
   outerKeys = Object.keys(this.nonterm);
-  outerKeys.forEach(function(ok){
+  outerKeys.forEach((ok) => {
     innerKeys = Object.keys(this.nonterm[ok]);
-    innerKeys.forEach(function(ik){
+    innerKeys.forEach((ik) => {
       let count = this.nonterm[ok][ik];
       let tag = "NONTERMINAL";
       let sym = ik;
-      console.log(count, tag, sym);
+      fs.appendFileSync(output, [count, tag, sym].join(" "));
+      fs.appendFileSync(output, "\n");
     });
   });
 
   outerKeys = Object.keys(this.unary);
-  outerKeys.forEach(function(ok){
+  outerKeys.forEach((ok) => {
     innerKeys = Object.keys(this.unary[ok]);
-    innerKeys.forEach(function(ik){
+    innerKeys.forEach((ik) => {
       let count = this.unary[ok][ik];
-      let word = this.unary[ik];
+      let word = ik;
       let tag = "UNARYRULE";
       let sym = ok;
-      console.log(count, tag, sym, word);
+      fs.appendFileSync(output, [count, tag, sym, word].join(" "));
+      fs.appendFileSync(output, "\n");
     });
   });
 
   outerKeys = Object.keys(this.binary);
-  outerKeys.forEach(function(ok){
+  outerKeys.forEach((ok) => {
     innerKeys = Object.keys(this.binary[ok])
-    innerKeys.forEach(function(ik){
+    innerKeys.forEach((ik) => {
       let count = this.binary[ok][ik];
       let word1 = ik.split(":")[0];
       let word2 = ik.split(":")[1];
+      let tag = "BINARYRULE";
       let sym = ok;
-      console.log(count, "BINARYRULE", sym, word1, word2);
+      fs.appendFileSync(output, [count, tag, sym, word1, word2].join(" "));
+      fs.appendFileSync(output, "\n");
     });
   });
 };
 
 Counts.prototype.count = function(tree){
-  console.log('TREE', tree);
   if (! tree) {return;}
   let symbol = tree[0]; // convert to array with JSON
-  console.log('SYMBOL', symbol);
   if (! this.nonterm[symbol]) {
     this.nonterm[symbol] = {};
   }
@@ -78,16 +84,22 @@ Counts.prototype.count = function(tree){
     word1 = tree[1][0];
     word2 = tree[2][0];
     key = [word1, word2].join(':');
-    if (this.nonterm[symbol][key]){
-      this.nonterm[symbol][key] += 1;
+    if (! this.binary[symbol]) {
+      this.binary[symbol] = {};
+    }
+    if (this.binary[symbol][key]){
+      this.binary[symbol][key] += 1;
     } else {
-      this.nonterm[symbol][key] = 1;
+      this.binary[symbol][key] = 1;
     }
     this.count(tree[1]);
     this.count(tree[2]);
   } else if (tree.length == 2){
     word1 = tree[1];
     key = word1;
+    if (! this.unary[symbol]){
+      this.unary[symbol] = {};
+    }
     if (this.unary[symbol][key]){
       this.unary[symbol][key] += 1;
     } else {
@@ -96,11 +108,12 @@ Counts.prototype.count = function(tree){
   }
 };
 
-var fileName = "../parse_train.dat";
 var counter = new Counts();
 console.log('COUNTER', counter);
 var file = splitFile(fileName);
 file.forEach(function(line){
-  counter.count(line);
+  let parsedLine = JSON.parse(line);
+  counter.count(parsedLine);
 });
-console.log('FINAL COUNTER', counter);
+
+counter.show();
